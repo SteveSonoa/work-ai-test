@@ -8,6 +8,12 @@ let pool: Pool | null = null;
  */
 export function getPool(): Pool {
   if (!pool) {
+    const host = process.env.DB_HOST || 'localhost';
+    const port = parseInt(process.env.DB_PORT || '5432');
+    const database = process.env.DB_NAME || 'banking_system';
+    const user = process.env.DB_USER || 'postgres';
+    const password = process.env.DB_PASSWORD || 'postgres';
+    
     // Use connection string if available (Vercel), otherwise use individual params
     const connectionString = process.env.DATABASE_URL;
     
@@ -17,28 +23,32 @@ export function getPool(): Pool {
         ssl: { rejectUnauthorized: false },
         max: 20,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 10000, // Increased timeout
       });
     } else {
+      const isSupabase = host.includes('supabase.co');
+      
       pool = new Pool({
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME || 'banking_system',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
+        host,
+        port,
+        database,
+        user,
+        password,
         max: 20,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
-        ssl: process.env.DB_HOST?.includes('supabase.co') 
-          ? { rejectUnauthorized: false }
-          : false,
+        connectionTimeoutMillis: 10000, // Increased timeout
+        ssl: isSupabase ? { rejectUnauthorized: false } : false,
+        // Add these for better Vercel compatibility
+        ...(isSupabase && {
+          keepAlive: true,
+          keepAliveInitialDelayMillis: 10000,
+        }),
       });
     }
 
     // Handle pool errors
     pool.on('error', (err) => {
       console.error('Unexpected error on idle client', err);
-      process.exit(-1);
     });
   }
 
