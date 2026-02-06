@@ -5,7 +5,7 @@ import { getAccountById, getAccountTransactionHistory } from '@/lib/services/acc
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,6 +17,8 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     // Get IP and user agent for audit trail
     const ipAddress = request.headers.get('x-forwarded-for') || 
                      request.headers.get('x-real-ip') || 
@@ -24,7 +26,7 @@ export async function GET(
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
     const account = await getAccountById(
-      params.id,
+      id,
       session.user.id,
       ipAddress,
       userAgent
@@ -42,7 +44,7 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const history = await getAccountTransactionHistory(params.id, limit, offset);
+    const history = await getAccountTransactionHistory(id, limit, offset);
 
     return NextResponse.json({
       account,

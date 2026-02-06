@@ -5,7 +5,7 @@ import { getTransactionById } from '@/lib/services/transfer.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,9 @@ export async function GET(
       );
     }
 
-    const transaction = await getTransactionById(params.id);
+    const { id } = await params;
+
+    const transaction = await getTransactionById(id);
 
     if (!transaction) {
       return NextResponse.json(
