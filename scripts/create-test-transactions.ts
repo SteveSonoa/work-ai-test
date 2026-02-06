@@ -11,7 +11,7 @@ async function createTestTransactions() {
 
   try {
     // Get test accounts
-    const accountsResult = await query('SELECT id, account_number FROM accounts LIMIT 2');
+    const accountsResult = await query('SELECT id, account_number FROM "ai-accounts" LIMIT 2');
     const accounts = accountsResult.rows;
 
     if (accounts.length < 2) {
@@ -23,7 +23,7 @@ async function createTestTransactions() {
     const account2 = accounts[1];
 
     // Get test user
-    const userResult = await query("SELECT id FROM users WHERE email = 'controller1@bank.com'");
+    const userResult = await query("SELECT id FROM \"ai-users\" WHERE email = 'controller1@bank.com'");
     const user = userResult.rows[0];
 
     if (!user) {
@@ -33,7 +33,7 @@ async function createTestTransactions() {
 
     // 1. Create a completed transaction (small amount, no approval needed)
     const completed = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description, completed_at)
        VALUES ($1, $2, $3, 'COMPLETED', $4, false, 'Test completed transfer', CURRENT_TIMESTAMP)
        RETURNING id, status, amount`,
@@ -45,7 +45,7 @@ async function createTestTransactions() {
 
     // 2. Create a pending transaction (processing)
     const pending = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description)
        VALUES ($1, $2, $3, 'PENDING', $4, false, 'Test pending transfer')
        RETURNING id, status, amount`,
@@ -57,7 +57,7 @@ async function createTestTransactions() {
 
     // 3. Create a transaction awaiting approval (large amount)
     const awaiting = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description)
        VALUES ($1, $2, $3, 'AWAITING_APPROVAL', $4, true, 'Test large transfer requiring approval')
        RETURNING id, status, amount`,
@@ -66,7 +66,7 @@ async function createTestTransactions() {
     
     // Create approval record
     await query(
-      `INSERT INTO approvals (transaction_id, status) VALUES ($1, 'PENDING')`,
+      `INSERT INTO "ai-approvals" (transaction_id, status) VALUES ($1, 'PENDING')`,
       [awaiting.rows[0].id]
     );
     
@@ -76,7 +76,7 @@ async function createTestTransactions() {
 
     // 4. Create a rejected transaction
     const rejected = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description)
        VALUES ($1, $2, $3, 'REJECTED', $4, true, 'Test rejected transfer')
        RETURNING id, status, amount`,
@@ -85,7 +85,7 @@ async function createTestTransactions() {
     
     // Create rejection record
     await query(
-      `INSERT INTO approvals (transaction_id, status, decision, decision_notes, decided_at)
+      `INSERT INTO "ai-approvals" (transaction_id, status, decision, decision_notes, decided_at)
        VALUES ($1, 'REJECTED', 'REJECT', 'Risk assessment failed - amount too high', CURRENT_TIMESTAMP)`,
       [rejected.rows[0].id]
     );
@@ -96,7 +96,7 @@ async function createTestTransactions() {
 
     // 5. Create a failed transaction
     const failed = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description, error_message)
        VALUES ($1, $2, $3, 'FAILED', $4, false, 'Test failed transfer', 'Insufficient funds after validation')
        RETURNING id, status, amount`,
@@ -109,7 +109,7 @@ async function createTestTransactions() {
 
     // 6. Create an approved transaction (approved but not yet executed)
     const approved = await query(
-      `INSERT INTO transactions 
+      `INSERT INTO "ai-transactions" 
         (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, description, approved_at)
        VALUES ($1, $2, $3, 'APPROVED', $4, true, 'Test approved transfer', CURRENT_TIMESTAMP)
        RETURNING id, status, amount`,
@@ -117,7 +117,7 @@ async function createTestTransactions() {
     );
     
     await query(
-      `INSERT INTO approvals (transaction_id, status, decision, decision_notes, decided_at)
+      `INSERT INTO "ai-approvals" (transaction_id, status, decision, decision_notes, decided_at)
        VALUES ($1, 'APPROVED', 'APPROVE', 'Approved by senior admin', CURRENT_TIMESTAMP)`,
       [approved.rows[0].id]
     );

@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     // Get total count
     const countQuery = `
       SELECT COUNT(*) as total
-      FROM transactions t
+      FROM "ai-transactions" t
       WHERE ${conditions.join(' AND ')}
     `;
     const countResult = await query(countQuery, params);
@@ -97,11 +97,11 @@ export async function GET(request: NextRequest) {
         au.email as approved_by_email,
         au.first_name as approved_by_first_name,
         au.last_name as approved_by_last_name
-      FROM transactions t
-      LEFT JOIN accounts fa ON t.from_account_id = fa.id
-      LEFT JOIN accounts ta ON t.to_account_id = ta.id
-      LEFT JOIN users iu ON t.initiated_by = iu.id
-      LEFT JOIN users au ON t.approved_by = au.id
+      FROM "ai-transactions" t
+      LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+      LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+      LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
+      LEFT JOIN "ai-users" au ON t.approved_by = au.id
       WHERE ${conditions.join(' AND ')}
       ORDER BY t.created_at DESC
       LIMIT $${paramCount} OFFSET $${paramCount + 1}

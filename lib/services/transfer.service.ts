@@ -28,7 +28,7 @@ export async function checkBalance(
   amount: number
 ): Promise<ValidationResult> {
   const result = await query<Account>(
-    'SELECT * FROM accounts WHERE id = $1 AND is_active = true',
+    'SELECT * FROM "ai-accounts" WHERE id = $1 AND is_active = true',
     [accountId]
   );
 
@@ -82,7 +82,7 @@ export async function validateTransfer(
 
   // Check to account exists and is active
   const toAccountResult = await query<Account>(
-    'SELECT * FROM accounts WHERE id = $1 AND is_active = true',
+    'SELECT * FROM "ai-accounts" WHERE id = $1 AND is_active = true',
     [toAccountId]
   );
 
@@ -124,7 +124,7 @@ export async function initiateTransfer(
 
     // Create transaction record
     const transactionResult = await client.query<Transaction>(
-      `INSERT INTO transactions (
+      `INSERT INTO "ai-transactions" (
         from_account_id, to_account_id, amount, status, 
         initiated_by, requires_approval, description
       )
@@ -175,7 +175,7 @@ export async function initiateTransfer(
     // If approval required, create approval record
     if (requiresApproval) {
       await client.query(
-        `INSERT INTO approvals (transaction_id, status)
+        `INSERT INTO "ai-approvals" (transaction_id, status)
          VALUES ($1, 'PENDING')`,
         [newTransaction.id]
       );
@@ -209,7 +209,7 @@ export async function executeTransfer(
 ): Promise<void> {
   // Get transaction details
   const transactionResult = await client.query<Transaction>(
-    'SELECT * FROM transactions WHERE id = $1',
+    'SELECT * FROM "ai-transactions" WHERE id = $1',
     [transactionId]
   );
 
@@ -222,19 +222,19 @@ export async function executeTransfer(
   try {
     // Deduct from source account
     await client.query(
-      'UPDATE accounts SET balance = balance - $1 WHERE id = $2',
+      'UPDATE "ai-accounts" SET balance = balance - $1 WHERE id = $2',
       [txn.amount, txn.from_account_id]
     );
 
     // Add to destination account
     await client.query(
-      'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
+      'UPDATE "ai-accounts" SET balance = balance + $1 WHERE id = $2',
       [txn.amount, txn.to_account_id]
     );
 
     // Update transaction status
     await client.query(
-      `UPDATE transactions 
+      `UPDATE "ai-transactions" 
        SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP
        WHERE id = $1`,
       [transactionId]
@@ -260,7 +260,7 @@ export async function executeTransfer(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     await client.query(
-      `UPDATE transactions 
+      `UPDATE "ai-transactions" 
        SET status = 'FAILED', error_message = $1
        WHERE id = $2`,
       [errorMessage, transactionId]
@@ -316,12 +316,12 @@ export async function getTransactionById(
         'role', au.role
       ) as approver,
       a.* as approval
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
-    LEFT JOIN users au ON t.approved_by = au.id
-    LEFT JOIN approvals a ON t.id = a.transaction_id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
+    LEFT JOIN "ai-users" au ON t.approved_by = au.id
+    LEFT JOIN "ai-approvals" a ON t.id = a.transaction_id
     WHERE t.id = $1`,
     [transactionId]
   );
@@ -379,7 +379,7 @@ export async function getTransactions(filters: {
 
   // Get total count
   const countResult = await query<{ count: string }>(
-    `SELECT COUNT(*) as count FROM transactions t ${whereClause}`,
+    `SELECT COUNT(*) as count FROM "ai-transactions" t ${whereClause}`,
     params
   );
   const total = parseInt(countResult.rows[0].count);
@@ -408,10 +408,10 @@ export async function getTransactions(filters: {
         'last_name', iu.last_name,
         'role', iu.role
       ) as initiator
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
     ${whereClause}
     ORDER BY t.created_at DESC
     LIMIT $${paramCount} OFFSET $${paramCount + 1}`,

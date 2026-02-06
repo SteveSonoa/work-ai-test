@@ -48,7 +48,7 @@ async function testConnection() {
     });
 
     // Test if users exist
-    const usersResult = await query('SELECT COUNT(*) as count FROM users');
+    const usersResult = await query('SELECT COUNT(*) as count FROM "ai-users"');
     console.log('\nUsers count:', usersResult.rows[0].count);
 
     if (parseInt(usersResult.rows[0].count) === 0) {
@@ -58,7 +58,7 @@ async function testConnection() {
     // Test a user login
     const testUser = await query(`
       SELECT id, email, first_name, last_name, role 
-      FROM users 
+      FROM "ai-users" 
       WHERE email = 'admin1@bank.com'
       LIMIT 1
     `);

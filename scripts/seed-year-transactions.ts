@@ -12,7 +12,7 @@ async function seedYearTransactions() {
 
   try {
     // Get test accounts
-    const accountsResult = await query('SELECT id, account_number FROM accounts');
+    const accountsResult = await query('SELECT id, account_number FROM "ai-accounts"');
     const accounts = accountsResult.rows;
 
     if (accounts.length < 4) {
@@ -21,7 +21,7 @@ async function seedYearTransactions() {
     }
 
     // Get test users
-    const usersResult = await query('SELECT id, email FROM users WHERE role IN ($1, $2)', ['CONTROLLER', 'ADMIN']);
+    const usersResult = await query('SELECT id, email FROM "ai-users" WHERE role IN ($1, $2)', ['CONTROLLER', 'ADMIN']);
     const users = usersResult.rows;
 
     if (users.length < 2) {
@@ -123,7 +123,7 @@ async function seedYearTransactions() {
 
         // Insert transaction
         const txResult = await query(
-          `INSERT INTO transactions 
+          `INSERT INTO "ai-transactions" 
             (from_account_id, to_account_id, amount, status, initiated_by, requires_approval, 
              description, error_message, completed_at, approved_at, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -149,7 +149,7 @@ async function seedYearTransactions() {
         if (approvalStatus) {
           const decidedAt = status === 'REJECTED' || status === 'APPROVED' ? transactionTime : null;
           await query(
-            `INSERT INTO approvals 
+            `INSERT INTO "ai-approvals" 
               (transaction_id, status, decision, decision_notes, decided_at, created_at)
              VALUES ($1, $2, $3, $4, $5, $6)`,
             [

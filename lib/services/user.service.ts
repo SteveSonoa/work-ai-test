@@ -8,7 +8,7 @@ import { createAuditLog } from './audit.service';
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
   const result = await query<User>(
-    'SELECT * FROM users WHERE email = $1',
+    'SELECT * FROM "ai-users" WHERE email = $1',
     [email]
   );
 
@@ -20,7 +20,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
  */
 export async function getUserById(id: string): Promise<UserWithoutPassword | null> {
   const result = await query<User>(
-    'SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at FROM users WHERE id = $1',
+    'SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at FROM "ai-users" WHERE id = $1',
     [id]
   );
 
@@ -58,7 +58,7 @@ export async function verifyPassword(
 export async function getAllUsers(): Promise<UserWithoutPassword[]> {
   const result = await query<User>(
     `SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at 
-     FROM users 
+     FROM "ai-users" 
      ORDER BY last_name, first_name`
   );
 
@@ -76,7 +76,7 @@ export async function updateUserRole(
   userAgent?: string
 ): Promise<UserWithoutPassword> {
   const result = await query<User>(
-    `UPDATE users 
+    `UPDATE "ai-users" 
      SET role = $1 
      WHERE id = $2 
      RETURNING id, email, first_name, last_name, role, is_active, created_at, updated_at`,
@@ -116,7 +116,7 @@ export async function createUser(
   const passwordHash = await bcrypt.hash(password, 10);
 
   const result = await query<User>(
-    `INSERT INTO users (email, password_hash, first_name, last_name, role)
+    `INSERT INTO "ai-users" (email, password_hash, first_name, last_name, role)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING id, email, first_name, last_name, role, is_active, created_at, updated_at`,
     [email, passwordHash, firstName, lastName, role]
@@ -135,7 +135,7 @@ export async function deactivateUser(
   userAgent?: string
 ): Promise<UserWithoutPassword> {
   const result = await query<User>(
-    `UPDATE users 
+    `UPDATE "ai-users" 
      SET is_active = false 
      WHERE id = $1 
      RETURNING id, email, first_name, last_name, role, is_active, created_at, updated_at`,

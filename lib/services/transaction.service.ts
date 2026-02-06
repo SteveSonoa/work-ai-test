@@ -34,11 +34,11 @@ export async function getTransactionById(
       au.email as approved_by_email,
       au.first_name as approved_by_first_name,
       au.last_name as approved_by_last_name
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
-    LEFT JOIN users au ON t.approved_by = au.id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
+    LEFT JOIN "ai-users" au ON t.approved_by = au.id
     WHERE t.id = $1`,
     [transactionId]
   );
@@ -52,7 +52,7 @@ export async function getTransactionById(
   // Get approval details if exists
   if (transaction.requires_approval) {
     const approvalResult = await query<Approval>(
-      'SELECT * FROM approvals WHERE transaction_id = $1',
+      'SELECT * FROM "ai-approvals" WHERE transaction_id = $1',
       [transactionId]
     );
 
@@ -75,8 +75,8 @@ export async function getTransactionAuditLogs(
      u.email as user_email,
      u.first_name as user_first_name,
      u.last_name as user_last_name
-     FROM audit_logs al
-     LEFT JOIN users u ON al.user_id = u.id
+     FROM "ai-audit_logs" al
+     LEFT JOIN "ai-users" u ON al.user_id = u.id
      WHERE al.transaction_id = $1
      ORDER BY al.created_at ASC`,
     [transactionId]

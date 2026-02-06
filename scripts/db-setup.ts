@@ -5,6 +5,12 @@
  * Run this script to set up the database schema and seed initial data
  */
 
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables from .env.local
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { initializeDatabase, seedDatabase, resetDatabase } from '../lib/db/seed';
 import { closePool } from '../lib/db/connection';
 

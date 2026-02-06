@@ -7,7 +7,7 @@ import { createAuditLog } from './audit.service';
  */
 export async function getAllAccounts(): Promise<Account[]> {
   const result = await query<Account>(
-    `SELECT * FROM accounts 
+    `SELECT * FROM "ai-accounts" 
      WHERE is_active = true 
      ORDER BY account_name`
   );
@@ -25,7 +25,7 @@ export async function getAccountById(
   userAgent?: string
 ): Promise<Account | null> {
   const result = await query<Account>(
-    'SELECT * FROM accounts WHERE id = $1',
+    'SELECT * FROM "ai-accounts" WHERE id = $1',
     [accountId]
   );
 
@@ -57,7 +57,7 @@ export async function getAccountByNumber(
   accountNumber: string
 ): Promise<Account | null> {
   const result = await query<Account>(
-    'SELECT * FROM accounts WHERE account_number = $1',
+    'SELECT * FROM "ai-accounts" WHERE account_number = $1',
     [accountNumber]
   );
 
@@ -69,7 +69,7 @@ export async function getAccountByNumber(
  */
 export async function getAccountBalance(accountId: string): Promise<number> {
   const result = await query<{ balance: string }>(
-    'SELECT balance FROM accounts WHERE id = $1',
+    'SELECT balance FROM "ai-accounts" WHERE id = $1',
     [accountId]
   );
 
@@ -90,7 +90,7 @@ export async function createAccount(
   minimumBalance: number = 0
 ): Promise<Account> {
   const result = await query<Account>(
-    `INSERT INTO accounts (account_number, account_name, balance, minimum_balance)
+    `INSERT INTO "ai-accounts" (account_number, account_name, balance, minimum_balance)
      VALUES ($1, $2, $3, $4)
      RETURNING *`,
     [accountNumber, accountName, initialBalance, minimumBalance]
@@ -107,7 +107,7 @@ export async function updateAccountBalance(
   newBalance: number
 ): Promise<Account> {
   const result = await query<Account>(
-    `UPDATE accounts 
+    `UPDATE "ai-accounts" 
      SET balance = $1 
      WHERE id = $2 
      RETURNING *`,
@@ -132,7 +132,7 @@ export async function getAccountTransactionHistory(
   // Get total count
   const countResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM transactions 
+     FROM "ai-transactions" 
      WHERE from_account_id = $1 OR to_account_id = $1`,
     [accountId]
   );
@@ -162,10 +162,10 @@ export async function getAccountTransactionHistory(
         'first_name', iu.first_name,
         'last_name', iu.last_name
       ) as initiator
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
     WHERE t.from_account_id = $1 OR t.to_account_id = $1
     ORDER BY t.created_at DESC
     LIMIT $2 OFFSET $3`,

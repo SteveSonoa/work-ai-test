@@ -12,7 +12,7 @@ async function seedAuditLogs() {
 
   try {
     // Get test users
-    const usersResult = await query('SELECT id, email, first_name, last_name FROM users');
+    const usersResult = await query('SELECT id, email, first_name, last_name FROM "ai-users"');
     const users = usersResult.rows;
 
     if (users.length === 0) {
@@ -21,12 +21,12 @@ async function seedAuditLogs() {
     }
 
     // Get test accounts
-    const accountsResult = await query('SELECT id, account_number FROM accounts');
+    const accountsResult = await query('SELECT id, account_number FROM "ai-accounts"');
     const accounts = accountsResult.rows;
 
     // Get test transactions
     const transactionsResult = await query(
-      'SELECT id, from_account_id, to_account_id, amount, status FROM transactions WHERE created_at >= $1 AND created_at <= $2 ORDER BY created_at',
+      'SELECT id, from_account_id, to_account_id, amount, status FROM "ai-transactions" WHERE created_at >= $1 AND created_at <= $2 ORDER BY created_at',
       ['2025-07-01', '2025-12-11']
     );
     const transactions = transactionsResult.rows;
@@ -165,7 +165,7 @@ async function seedAuditLogs() {
 
         // Insert audit log
         await query(
-          `INSERT INTO audit_logs (id, action, user_id, details, created_at)
+          `INSERT INTO "ai-audit_logs" (id, action, user_id, details, created_at)
            VALUES (uuid_generate_v4(), $1, $2, $3, $4)`,
           [action, randomUser.id, JSON.stringify(details), timestamp]
         );

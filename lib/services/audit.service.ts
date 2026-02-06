@@ -28,7 +28,7 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<Audi
     client,
   } = params;
 
-  const queryText = `INSERT INTO audit_logs (action, user_id, transaction_id, account_id, details, ip_address, user_agent)
+  const queryText = `INSERT INTO "ai-audit_logs" (action, user_id, transaction_id, account_id, details, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`;
   
@@ -107,7 +107,7 @@ export async function getAuditLogs(filters: {
 
   // Get total count
   const countResult = await query<{ count: string }>(
-    `SELECT COUNT(*) as count FROM audit_logs ${whereClause}`,
+    `SELECT COUNT(*) as count FROM "ai-audit_logs" ${whereClause}`,
     params
   );
   const total = parseInt(countResult.rows[0].count);
@@ -117,7 +117,7 @@ export async function getAuditLogs(filters: {
   const offset = filters.offset || 0;
   
   const logsResult = await query<AuditLog>(
-    `SELECT * FROM audit_logs 
+    `SELECT * FROM "ai-audit_logs" 
      ${whereClause}
      ORDER BY created_at DESC
      LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
@@ -231,10 +231,10 @@ export async function getAuditLogsWithDetails(filters: {
   // Get total count
   const countResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM audit_logs al
-     LEFT JOIN users u ON al.user_id = u.id
-     LEFT JOIN transactions t ON al.transaction_id = t.id
-     LEFT JOIN accounts a ON al.account_id = a.id
+     FROM "ai-audit_logs" al
+     LEFT JOIN "ai-users" u ON al.user_id = u.id
+     LEFT JOIN "ai-transactions" t ON al.transaction_id = t.id
+     LEFT JOIN "ai-accounts" a ON al.account_id = a.id
      ${whereClause}`,
     params
   );
@@ -264,10 +264,10 @@ export async function getAuditLogsWithDetails(filters: {
          'amount', t.amount,
          'status', t.status
        ) as transaction
-     FROM audit_logs al
-     LEFT JOIN users u ON al.user_id = u.id
-     LEFT JOIN accounts a ON al.account_id = a.id
-     LEFT JOIN transactions t ON al.transaction_id = t.id
+     FROM "ai-audit_logs" al
+     LEFT JOIN "ai-users" u ON al.user_id = u.id
+     LEFT JOIN "ai-accounts" a ON al.account_id = a.id
+     LEFT JOIN "ai-transactions" t ON al.transaction_id = t.id
      ${whereClause}
      ORDER BY al.created_at DESC
      LIMIT $${paramCount} OFFSET $${paramCount + 1}`,

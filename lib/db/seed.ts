@@ -29,7 +29,7 @@ export async function seedDatabase(): Promise<void> {
   try {
     await transaction(async (client) => {
       // Check if data already exists
-      const userCheck = await client.query('SELECT COUNT(*) FROM users');
+      const userCheck = await client.query('SELECT COUNT(*) FROM "ai-users"');
       if (parseInt(userCheck.rows[0].count) > 0) {
         console.log('Database already seeded, skipping...');
         return;
@@ -56,7 +56,7 @@ export async function seedDatabase(): Promise<void> {
 
       for (const user of users) {
         await client.query(
-          `INSERT INTO users (email, password_hash, first_name, last_name, role) 
+          `INSERT INTO "ai-users" (email, password_hash, first_name, last_name, role) 
            VALUES ($1, $2, $3, $4, $5)`,
           [user.email, passwordHash, user.first_name, user.last_name, user.role]
         );
@@ -76,7 +76,7 @@ export async function seedDatabase(): Promise<void> {
 
       for (const account of accounts) {
         await client.query(
-          `INSERT INTO accounts (account_number, account_name, balance, minimum_balance) 
+          `INSERT INTO "ai-accounts" (account_number, account_name, balance, minimum_balance) 
            VALUES ($1, $2, $3, $4)`,
           [account.account_number, account.account_name, account.balance, account.minimum_balance]
         );
@@ -98,11 +98,11 @@ export async function seedDatabase(): Promise<void> {
 export async function resetDatabase(): Promise<void> {
   try {
     // Drop all tables
-    await query('DROP TABLE IF EXISTS audit_logs CASCADE');
-    await query('DROP TABLE IF EXISTS approvals CASCADE');
-    await query('DROP TABLE IF EXISTS transactions CASCADE');
-    await query('DROP TABLE IF EXISTS accounts CASCADE');
-    await query('DROP TABLE IF EXISTS users CASCADE');
+    await query('DROP TABLE IF EXISTS "ai-audit_logs" CASCADE');
+    await query('DROP TABLE IF EXISTS "ai-approvals" CASCADE');
+    await query('DROP TABLE IF EXISTS "ai-transactions" CASCADE');
+    await query('DROP TABLE IF EXISTS "ai-accounts" CASCADE');
+    await query('DROP TABLE IF EXISTS "ai-users" CASCADE');
     await query('DROP TYPE IF EXISTS user_role CASCADE');
     await query('DROP TYPE IF EXISTS transaction_status CASCADE');
     await query('DROP TYPE IF EXISTS audit_action CASCADE');

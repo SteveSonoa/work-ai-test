@@ -29,9 +29,9 @@ async function getAccountTransactions(accountId: string): Promise<Transaction[]>
       t.created_at,
       fa.account_number as from_account_number,
       ta.account_number as to_account_number
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
     WHERE t.from_account_id = $1 OR t.to_account_id = $1
     ORDER BY t.created_at DESC
     LIMIT 100`,

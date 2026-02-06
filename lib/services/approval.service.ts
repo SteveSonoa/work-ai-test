@@ -43,11 +43,11 @@ export async function getPendingApprovalsForAdmin(
         'last_name', iu.last_name,
         'role', iu.role
       ) as initiator
-    FROM transactions t
-    INNER JOIN approvals a ON t.id = a.transaction_id
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
+    FROM "ai-transactions" t
+    INNER JOIN "ai-approvals" a ON t.id = a.transaction_id
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
     WHERE t.status = 'AWAITING_APPROVAL'
       AND a.status = 'PENDING'
       AND t.initiated_by != $1
@@ -86,11 +86,11 @@ export async function getAllPendingApprovals(): Promise<TransactionWithDetails[]
         'last_name', iu.last_name,
         'role', iu.role
       ) as initiator
-    FROM transactions t
-    INNER JOIN approvals a ON t.id = a.transaction_id
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
+    FROM "ai-transactions" t
+    INNER JOIN "ai-approvals" a ON t.id = a.transaction_id
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
     WHERE t.status = 'AWAITING_APPROVAL'
       AND a.status = 'PENDING'
     ORDER BY t.created_at ASC`
@@ -117,7 +117,7 @@ export async function processApproval(
   return await transaction(async (client: PoolClient) => {
     // Get transaction details
     const txnResult = await client.query<Transaction>(
-      'SELECT * FROM transactions WHERE id = $1',
+      'SELECT * FROM "ai-transactions" WHERE id = $1',
       [transactionId]
     );
 
@@ -144,7 +144,7 @@ export async function processApproval(
 
     // Update approval record
     await client.query(
-      `UPDATE approvals 
+      `UPDATE "ai-approvals" 
        SET assigned_to = $1, status = $2, decision = $3, 
            decision_notes = $4, decided_at = CURRENT_TIMESTAMP
        WHERE transaction_id = $5`,
@@ -154,7 +154,7 @@ export async function processApproval(
     if (decision === 'APPROVED') {
       // Update transaction
       await client.query(
-        `UPDATE transactions 
+        `UPDATE "ai-transactions" 
          SET status = 'APPROVED', approved_by = $1, approved_at = CURRENT_TIMESTAMP
          WHERE id = $2`,
         [approverId, transactionId]
@@ -179,7 +179,7 @@ export async function processApproval(
     } else {
       // Update transaction to rejected
       await client.query(
-        `UPDATE transactions 
+        `UPDATE "ai-transactions" 
          SET status = 'REJECTED', approved_by = $1, approved_at = CURRENT_TIMESTAMP
          WHERE id = $2`,
         [approverId, transactionId]
@@ -202,7 +202,7 @@ export async function processApproval(
 
     // Get updated transaction
     const updatedResult = await client.query<Transaction>(
-      'SELECT * FROM transactions WHERE id = $1',
+      'SELECT * FROM "ai-transactions" WHERE id = $1',
       [transactionId]
     );
 
@@ -217,7 +217,7 @@ export async function getApprovalByTransactionId(
   transactionId: string
 ): Promise<Approval | null> {
   const result = await query<Approval>(
-    'SELECT * FROM approvals WHERE transaction_id = $1',
+    'SELECT * FROM "ai-approvals" WHERE transaction_id = $1',
     [transactionId]
   );
 

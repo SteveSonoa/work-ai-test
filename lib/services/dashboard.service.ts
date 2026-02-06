@@ -7,14 +7,14 @@ import { DashboardStats, TransactionWithDetails } from '@/lib/types/database';
 export async function getDashboardStats(): Promise<DashboardStats> {
   // Total transactions
   const totalTransactionsResult = await query<{ count: string }>(
-    'SELECT COUNT(*) as count FROM transactions'
+    'SELECT COUNT(*) as count FROM "ai-transactions"'
   );
   const total_transactions = parseInt(totalTransactionsResult.rows[0].count);
 
   // Pending approvals
   const pendingApprovalsResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM transactions 
+     FROM "ai-transactions" 
      WHERE status = 'AWAITING_APPROVAL'`
   );
   const pending_approvals = parseInt(pendingApprovalsResult.rows[0].count);
@@ -22,7 +22,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   // Completed today
   const completedTodayResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM transactions 
+     FROM "ai-transactions" 
      WHERE status = 'COMPLETED' 
        AND DATE(completed_at) = CURRENT_DATE`
   );
@@ -31,7 +31,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   // Total volume today
   const volumeTodayResult = await query<{ total: string }>(
     `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM transactions 
+     FROM "ai-transactions" 
      WHERE status = 'COMPLETED' 
        AND DATE(completed_at) = CURRENT_DATE`
   );
@@ -40,7 +40,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   // Failed transactions
   const failedTransactionsResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM transactions 
+     FROM "ai-transactions" 
      WHERE status = 'FAILED'`
   );
   const failed_transactions = parseInt(failedTransactionsResult.rows[0].count);
@@ -48,7 +48,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   // Active accounts
   const activeAccountsResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
-     FROM accounts 
+     FROM "ai-accounts" 
      WHERE is_active = true`
   );
   const active_accounts = parseInt(activeAccountsResult.rows[0].count);
@@ -86,10 +86,10 @@ export async function getRecentTransactions(limit: number = 10): Promise<Transac
         'first_name', iu.first_name,
         'last_name', iu.last_name
       ) as initiator
-    FROM transactions t
-    LEFT JOIN accounts fa ON t.from_account_id = fa.id
-    LEFT JOIN accounts ta ON t.to_account_id = ta.id
-    LEFT JOIN users iu ON t.initiated_by = iu.id
+    FROM "ai-transactions" t
+    LEFT JOIN "ai-accounts" fa ON t.from_account_id = fa.id
+    LEFT JOIN "ai-accounts" ta ON t.to_account_id = ta.id
+    LEFT JOIN "ai-users" iu ON t.initiated_by = iu.id
     ORDER BY t.created_at DESC
     LIMIT $1`,
     [limit]
@@ -107,7 +107,7 @@ export async function getTransactionsByStatus(): Promise<Array<{ status: string;
       status,
       COUNT(*) as count,
       COALESCE(SUM(amount), 0) as total_amount
-    FROM transactions
+    FROM "ai-transactions"
     GROUP BY status
     ORDER BY count DESC`
   );
@@ -124,7 +124,7 @@ export async function getDailyTransactionVolume(days: number = 7): Promise<Array
       DATE(created_at) as date,
       COUNT(*) as count,
       COALESCE(SUM(CASE WHEN status = 'COMPLETED' THEN amount ELSE 0 END), 0) as total_volume
-    FROM transactions
+    FROM "ai-transactions"
     WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
     GROUP BY DATE(created_at)
     ORDER BY date DESC`
@@ -141,7 +141,7 @@ export async function getTransactionTrends(days: number): Promise<Array<{ date: 
     `SELECT 
       DATE(created_at) as date,
       COUNT(*) as count
-    FROM transactions
+    FROM "ai-transactions"
     WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
     GROUP BY DATE(created_at)
     ORDER BY date ASC`
@@ -161,7 +161,7 @@ export async function getVolumeTrends(days: number): Promise<Array<{ date: strin
     `SELECT 
       DATE(created_at) as date,
       COALESCE(SUM(amount), 0) as volume
-    FROM transactions
+    FROM "ai-transactions"
     WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
       AND status = 'COMPLETED'
     GROUP BY DATE(created_at)
@@ -187,7 +187,7 @@ export async function getStatusBreakdown(days: number): Promise<Array<{ name: st
         ELSE 'Other'
       END as status,
       COUNT(*) as count
-    FROM transactions
+    FROM "ai-transactions"
     WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
     GROUP BY 
       CASE 
