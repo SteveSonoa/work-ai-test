@@ -8,19 +8,32 @@ let pool: Pool | null = null;
  */
 export function getPool(): Pool {
   if (!pool) {
-    pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'banking_system',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      ssl: process.env.DB_HOST?.includes('supabase.co') 
-        ? { rejectUnauthorized: false }
-        : false,
-    });
+    // Use connection string if available (Vercel), otherwise use individual params
+    const connectionString = process.env.DATABASE_URL;
+    
+    if (connectionString) {
+      pool = new Pool({
+        connectionString,
+        ssl: { rejectUnauthorized: false },
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      });
+    } else {
+      pool = new Pool({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'banking_system',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        ssl: process.env.DB_HOST?.includes('supabase.co') 
+          ? { rejectUnauthorized: false }
+          : false,
+      });
+    }
 
     // Handle pool errors
     pool.on('error', (err) => {
